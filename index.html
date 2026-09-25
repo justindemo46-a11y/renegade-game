@@ -3,137 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Path of the Defiant: 3D Open World</title>
+    <title>Path of the Defiant: 3D Immortal Open World</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: monospace; user-select: none; }
+        body { margin: 0; overflow: hidden; background: #030307; font-family: monospace; user-select: none; }
         #ui {
-            position: absolute; top: 10px; left: 10px; color: #f39c12;
-            background: rgba(10, 10, 15, 0.85); padding: 10px; border: 1px solid #332244;
-            border-radius: 6px; font-size: 0.8rem; pointer-events: none; z-index: 10;
+            position: absolute; top: 15px; left: 15px; color: #f39c12;
+            background: rgba(10, 8, 18, 0.85); padding: 12px 16px; border: 1px solid #4a235a;
+            border-radius: 8px; font-size: 0.85rem; pointer-events: none; z-index: 10;
+            box-shadow: 0 0 15px rgba(142, 68, 173, 0.4);
         }
         #controls {
-            position: absolute; bottom: 20px; width: 100%; display: flex;
+            position: absolute; bottom: 25px; width: 100%; display: flex;
             justify-content: space-around; padding: 0 20px; z-index: 10; box-sizing: border-box;
         }
         .ctrl-btn {
-            background: rgba(30, 20, 50, 0.8); color: #fff; border: 1px solid #8e44ad;
-            padding: 15px 25px; border-radius: 8px; font-weight: bold; font-size: 1rem;
-            touch-action: manipulation; cursor: pointer;
+            background: linear-gradient(135deg, #2c1654, #4a235a); color: #fff; border: 1px solid #9b59b6;
+            padding: 16px 28px; border-radius: 12px; font-weight: bold; font-size: 1rem;
+            touch-action: manipulation; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         /* Quiz Modal */
         #quiz-modal {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 8, 0.92); z-index: 100; flex-direction: column;
+            background: rgba(3, 3, 6, 0.95); z-index: 100; flex-direction: column;
             justify-content: center; align-items: center; padding: 20px; text-align: center; color: #fff;
         }
         .quiz-option {
-            background: #1a1528; border: 1px solid #f39c12; color: #f39c12;
-            padding: 12px 20px; margin: 8px; border-radius: 5px; width: 100%; max-width: 320px;
-            cursor: pointer; font-family: monospace; font-size: 0.85rem;
+            background: #150f24; border: 1px solid #f39c12; color: #f39c12;
+            padding: 14px 22px; margin: 8px; border-radius: 8px; width: 100%; max-width: 340px;
+            cursor: pointer; font-family: monospace; font-size: 0.9rem; transition: 0.2s;
         }
+        .quiz-option:active { background: #f39c12; color: #000; }
     </style>
-    <!-- Load Three.js from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
     <div id="ui">
-        Realm: <span id="ui-realm">Qi Condensation</span><br>
+        Realm: <span id="ui-realm" style="color:#e67e22">Qi Condensation</span><br>
         Spirit Qi: <span id="ui-qi">0</span> / 100<br>
-        Weapon: <span id="ui-weapon" style="color:#00cec9">Wooden Sword</span><br>
+        Weapon: <span id="ui-weapon" style="color:#00cec9">Heaven Defying Sword</span><br>
         Dao Enlightenment: <span id="ui-score">0</span>
     </div>
 
     <div id="controls">
-        <button class="ctrl-btn" onclick="movePlayer(-1, 0)">⬅️ Left</button>
-        <button class="ctrl-btn" onclick="attackEnemy()">⚔️ Attack</button>
-        <button class="ctrl-btn" onclick="movePlayer(1, 0)">Right ➡️</button>
+        <button class="ctrl-btn" onclick="movePlayer(-1)">⬅️ Shift Left</button>
+        <button class="ctrl-btn" onclick="attackEnemy()">⚔️ Comprehend Dao</button>
+        <button class="ctrl-btn" onclick="movePlayer(1)">Shift Right ➡️</button>
     </div>
 
-    <!-- Quiz Modal for Open World Trials -->
     <div id="quiz-modal">
-        <h2 style="color: #c0392b; margin-bottom: 15px;">DAO INSIGHT TRIAL</h2>
-        <p id="quiz-question" style="font-size: 0.9rem; margin-bottom: 20px; max-width: 360px;"></p>
+        <h2 style="color: #e74c3c; margin-bottom: 15px; letter-spacing: 2px;">HEAVENLY TRIAL INSIGHT</h2>
+        <p id="quiz-question" style="font-size: 0.95rem; margin-bottom: 25px; max-width: 360px; line-height: 1.4;"></p>
         <div id="quiz-options-box" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
     </div>
 
 <script>
-    // 3D Scene Setup
+    // Scene & Renderer Setup
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x050508);
-    scene.fog = new THREE.FogExp2(0x050508, 0.035);
+    scene.background = new THREE.Color(0x05040a);
+    scene.fog = new THREE.FogExp2(0x05040a, 0.025);
 
-    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 6, 12);
-    camera.lookAt(0, 0, 0);
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 5, 11);
+    camera.lookAt(0, 1.5, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    // Dynamic Atmospheric Lighting
+    const ambientLight = new THREE.AmbientLight(0x2c1b4d, 1.2);
     scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0x8e44ad, 1.2);
-    dirLight.position.set(10, 20, 10);
-    scene.add(dirLight);
 
-    // Open World Ground (Endless Terrain Grid)
-    const floorGeo = new THREE.PlaneGeometry(100, 100, 30, 30);
-    const floorMat = new THREE.MeshStandardMaterial({ color: 0x111118, wireframe: true });
+    const moonLight = new THREE.DirectionalLight(0x85c1e9, 1.5);
+    moonLight.position.set(15, 30, 15);
+    scene.add(moonLight);
+
+    const pointLight = new THREE.PointLight(0xf39c12, 2, 25);
+    pointLight.position.set(0, 3, 2);
+    scene.add(pointLight);
+
+    // Open World Terrain (Immortal Stone Path & Mist Plane)
+    const floorGeo = new THREE.PlaneGeometry(120, 120, 40, 40);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x0b0914, roughness: 0.8, wireframe: false });
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
 
-    // Player Character (Cultivator Avatar)
-    const playerGeo = new THREE.BoxGeometry(0.8, 1.6, 0.8);
-    const playerMat = new THREE.MeshStandardMaterial({ color: 0xf39c12 });
-    const player = new THREE.Mesh(playerGeo, playerMat);
-    player.position.set(0, 0.8, 0);
-    scene.add(player);
+    // Grid Matrix Line Overlay for Immersion
+    const gridHelper = new THREE.GridHelper(120, 40, 0x8e44ad, 0x1c1333);
+    gridHelper.position.y = 0.01;
+    scene.add(gridHelper);
 
-    // Floating Weapon (Flying Sword)
-    const weaponGeo = new THREE.BoxGeometry(0.2, 0.8, 0.1);
-    const weaponMat = new THREE.MeshStandardMaterial({ color: 0x00cec9 });
-    const weapon = new THREE.Mesh(weaponGeo, weaponMat);
-    weapon.position.set(0.8, 1.2, 0);
-    scene.add(weapon);
+    // --- PROCEDURAL CULTIVATOR CHARACTER (Robed Avatar) ---
+    const playerGroup = new THREE.Group();
 
-    // Spawn 3D Enemies / Trial Statues in Open World
-    const enemies = [];
-    const enemyGeo = new THREE.ConeGeometry(0.7, 1.5, 4);
-    const enemyMat = new THREE.MeshStandardMaterial({ color: 0xc0392b });
+    // Robes / Body
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x111017, roughness: 0.4 });
+    const robeGeo = new THREE.ConeGeometry(0.6, 1.8, 6);
+    const robe = new THREE.Mesh(robeGeo, bodyMat);
+    robe.position.y = 0.9;
+    playerGroup.add(robe);
+
+    // Golden Trim / Sash Accents
+    const sashMat = new THREE.MeshStandardMaterial({ color: 0xf39c12, metalness: 0.8 });
+    const sashGeo = new THREE.CylinderGeometry(0.42, 0.45, 0.2, 6);
+    const sash = new THREE.Mesh(sashGeo, sashMat);
+    sash.position.y = 1.1;
+    playerGroup.add(sash);
+
+    // Head / Hair (Daoist Top Knot)
+    const headGeo = new THREE.SphereGeometry(0.25, 16, 16);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.y = 1.9;
+    playerGroup.add(head);
+
+    const hairGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.3, 8);
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a });
+    const hair = new THREE.Mesh(hairGeo, hairMat);
+    hair.position.set(0, 2.15, -0.05);
+    playerGroup.add(hair);
+
+    scene.add(playerGroup);
+
+    // --- FLOATING SPIRIT WEAPON (Glowing Jade Flying Sword) ---
+    const weaponGroup = new THREE.Group();
+    const bladeMat = new THREE.MeshStandardMaterial({ color: 0x00cec9, emissive: 0x008b8b, roughness: 0.2 });
     
-    for(let i = 0; i < 5; i++) {
-        let enemy = new THREE.Mesh(enemyGeo, enemyMat);
-        enemy.position.set((Math.random() - 0.5) * 30, 0.75, -10 - (i * 8));
-        scene.add(enemy);
-        enemies.push(enemy);
+    const bladeGeo = new THREE.BoxGeometry(0.12, 1.4, 0.04);
+    const blade = new THREE.Mesh(bladeGeo, bladeMat);
+    weaponGroup.add(blade);
+
+    const hiltGeo = new THREE.BoxGeometry(0.35, 0.08, 0.08);
+    const hiltMat = new THREE.MeshStandardMaterial({ color: 0xf39c12 });
+    const hilt = new THREE.Mesh(hiltGeo, hiltMat);
+    hilt.position.y = -0.65;
+    weaponGroup.add(hilt);
+
+    weaponGroup.position.set(0.9, 1.6, 0.2);
+    weaponGroup.rotation.z = -0.2;
+    scene.add(weaponGroup);
+
+    // --- OPEN WORLD TRIAL STATUES & ANCIENT PAGODAS ---
+    const statues = [];
+    const statueGeo = new THREE.CylinderGeometry(0.6, 0.9, 3.2, 5);
+    const statueMat = new THREE.MeshStandardMaterial({ color: 0x3d3556, roughness: 0.9 });
+
+    for(let i = 0; i < 6; i++) {
+        let statue = new THREE.Mesh(statueGeo, statueMat);
+        statue.position.set((Math.random() - 0.5) * 35, 1.6, -12 - (i * 10));
+        scene.add(statue);
+        statues.push(statue);
     }
 
-    // Game Variables
-    let gameData = { qi: 0, score: 0, realmIdx: 0, weapon: "Flying Spirit Sword" };
-    const realms = ["Qi Condensation", "Foundation Establishment", "Core Formation", "Nascent Soul"];
+    // Floating Celestial Particles (Spirit Qi Dust)
+    const particleCount = 200;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
 
-    // Quiz Database (Renegade Immortal Lore & Cultivation Questions)
+    for(let i = 0; i < particleCount * 3; i += 3) {
+        particlePositions[i] = (Math.random() - 0.5) * 60;
+        particlePositions[i+1] = Math.random() * 15;
+        particlePositions[i+2] = (Math.random() - 0.5) * 60;
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat = new THREE.PointsMaterial({ color: 0x00cec9, size: 0.15, transparent: true, opacity: 0.7 });
+    const dustParticles = new THREE.Points(particleGeo, particleMat);
+    scene.add(dustParticles);
+
+    // Game Logic State
+    let gameData = { qi: 0, score: 0, realmIdx: 0, weapon: "Heaven Defying Sword" };
+    const realms = ["Qi Condensation", "Foundation Establishment", "Core Formation", "Nascent Soul", "Soul Transformation"];
+
     const quizzes = [
-        { q: "What is Wang Lin's core driving motive against the Heavens?", opts: ["Fame", "Revenge & Defiance", "Wealth"], ans: 1 },
-        { q: "What malicious treasure is Wang Lin famous for wielding?", opts: ["Flag of Souls", "Golden Bell", "Divine Mirror"], ans: 0 },
-        { q: "True cultivation requires relying on whom?", opts: ["The Sect Master", "Heavenly Grace", "Oneself"], ans: 2 }
+        { q: "What is Wang Lin's absolute principle when facing stronger sects?", opts: ["Bow and submit", "Kill and defy the Heavens", "Flee across realms"], ans: 1 },
+        { q: "What item triggers Wang Lin's initial path into cultivation?", opts: ["A mysterious celestial slip", "An ancient pill furnace", "A broken spirit sword"], ans: 0 },
+        { q: "In the world of Xian Ni, what defines a true cultivator?", opts: ["Inherited bloodline", "Resolute heart against destiny", "Abundant spiritual stones"], ans: 1 }
     ];
 
-    function movePlayer(dirX, dirZ) {
-        player.position.x += dirX * 2;
-        player.position.x = Math.max(-10, Math.min(10, player.position.x));
-        camera.position.x = player.position.x;
+    function movePlayer(dirX) {
+        playerGroup.position.x += dirX * 2.5;
+        playerGroup.position.x = Math.max(-12, Math.min(12, playerGroup.position.x));
+        camera.position.x = playerGroup.position.x;
     }
 
     function attackEnemy() {
-        // Swing animation effect
-        weapon.rotation.z += 1.5;
-        setTimeout(() => weapon.rotation.z = 0, 200);
+        weaponGroup.position.z += 0.8;
+        weaponGroup.rotation.x += 0.5;
+        setTimeout(() => {
+            weaponGroup.position.z = 0.2;
+            weaponGroup.rotation.x = 0;
+        }, 250);
 
-        // Check proximity to trigger a Quiz Trial
         triggerQuiz();
     }
 
@@ -157,15 +220,15 @@
     function checkQuiz(correct) {
         document.getElementById("quiz-modal").style.display = "none";
         if (correct) {
-            gameData.qi += 30;
-            gameData.score += 50;
+            gameData.qi += 35;
+            gameData.score += 100;
             if(gameData.qi >= 100 && gameData.realmIdx < realms.length - 1) {
                 gameData.realmIdx++;
                 gameData.qi = 0;
             }
-            alert("Dao Comprehension Successful! Spirit Qi increased.");
+            alert("Dao Insight Comprehended! Meridian channels expand.");
         } else {
-            alert("Wrong Insight! Your meridians suffer backlash.");
+            alert("Trial Failed! Karmic backlash shakes your soul.");
         }
         updateUI();
     }
@@ -177,14 +240,22 @@
         document.getElementById("ui-weapon").innerText = gameData.weapon;
     }
 
-    // Animation Loop
+    let clock = new THREE.Clock();
     function animate() {
         requestAnimationFrame(animate);
-        
-        // Rotate floating weapon slightly
-        weapon.rotation.y += 0.03;
-        weapon.position.x = player.position.x + 0.8;
-        
+        let elapsedTime = clock.getElapsedTime();
+
+        weaponGroup.position.y = 1.6 + Math.sin(elapsedTime * 3) * 0.12;
+        weaponGroup.rotation.y = elapsedTime * 1.5;
+        weaponGroup.position.x = playerGroup.position.x + 0.9;
+
+        const positions = dustParticles.geometry.attributes.position.array;
+        for(let i = 1; i < positions.length; i += 3) {
+            positions[i] -= 0.02;
+            if(positions[i] < 0) positions[i] = 15;
+        }
+        dustParticles.geometry.attributes.position.needsUpdate = true;
+
         renderer.render(scene, camera);
     }
     animate();
@@ -197,3 +268,4 @@
 </script>
 </body>
 </html>
+
