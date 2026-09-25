@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Path of the Defiant: Open World</title>
+    <style>
+        :root {
+            --bg-color: #040406;
+            --panel-bg: #0b0b10;
+            --border-color: #1f1b2c;
+            --text-main: #c0c0d0;
+            --accent-gold: #f39c12;
+            --accent-crimson: #c0392b;
+            --accent-purple: #8e44ad;
+            --accent-cyan: #16a085;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 8px;
+        }
+        header { text-align: center; margin-bottom: 8px; }
+        h1 { color: var(--accent-gold); font-size: 1.1rem; letter-spacing: 2px; text-transform: uppercase; }
+        
+        .container {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+        }
+        .panel-title {
+            font-size: 0.72rem;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #161220;
+            padding-bottom: 2px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4px;
+            font-size: 0.78rem;
+        }
+        .stats-grid span { color: var(--accent-gold); font-weight: bold; }
+        
+        .progress-bar-container {
+            width: 100%;
+            background: #14111d;
+            border-radius: 3px;
+            height: 6px;
+            margin-top: 5px;
+            overflow: hidden;
+            border: 1px solid #231c33;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+            width: 0%;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+        button {
+            background: #120f1b;
+            color: var(--text-main);
+            border: 1px solid #32264a;
+            padding: 10px 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.78rem;
+        }
+        button:active { background: var(--accent-purple); color: #fff; }
+        button.danger { border-color: var(--accent-crimson); color: #e74c3c; }
+        button.gold { border-color: var(--accent-gold); color: var(--accent-gold); }
+
+        /* Open World Region Selector Styling */
+        .region-box {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .region-select {
+            background: #120f1b;
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-purple);
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            width: 100%;
+        }
+
+        .log-box {
+            background-color: #020204;
+            border: 1px solid #120f1a;
+            height: 110px;
+            overflow-y: auto;
+            padding: 6px;
+            font-size: 0.7rem;
+            display: flex;
+            flex-direction: column-reverse;
+            color: #888898;
+        }
+        .log-entry { margin-bottom: 3px; border-bottom: 1px dashed #0a0810; padding-bottom: 2px; }
+        .log-gold { color: var(--accent-gold); }
+        .log-crimson { color: var(--accent-crimson); }
+        .log-purple { color: #d2b4de; }
+        .log-cyan { color: var(--accent-cyan); }
+
+        .tribulation-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(4, 4, 6, 0.96);
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Path of the Defiant</h1>
+        <p style="font-size: 0.65rem; color: #555;">Open World Xianxia Simulation</p>
+    </header>
+
+    <div class="container">
+        <!-- Status Panel -->
+        <div class="panel">
+            <div class="panel-title">Cultivator Status</div>
+            <div class="stats-grid">
+                <div>Realm: <span id="ui-realm">Qi Condensation</span></div>
+                <div>Lifespan: <span id="ui-life">100</span> yrs</div>
+                <div>Fortitude: <span id="ui-fortitude">15</span></div>
+                <div>Spirit Stones: <span id="ui-stones">10</span></div>
+                <div>Location: <span id="ui-location" style="color:var(--accent-cyan)">Hao Ling Sect</span></div>
+                <div>Meridians: <span id="ui-meridian">Intact</span></div>
+            </div>
+            <div style="margin-top: 6px; font-size: 0.72rem;">
+                Spirit Qi: <span id="ui-qi">0</span> / <span id="ui-max-qi">100</span>
+                <div class="progress-bar-container">
+                    <div id="qi-progress" class="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Open World Travel & Actions Panel -->
+        <div class="panel">
+            <div class="panel-title">Open World Territory</div>
+            <div class="region-box">
+                <select id="region-select" class="region-select" onchange="game.changeRegion(this.value)">
+                    <option value="0">Hao Ling Sect (Safe Haven - Qi Density: Low)</option>
+                    <option value="1">Dead Spirit Valley (Dangerous - Relic Hunts)</option>
+                    <option value="2">Ancient Demon Abyss (Hostile - Extreme Qi)</option>
+                </select>
+                <div class="actions-grid" style="margin-top: 4px;">
+                    <button onclick="game.meditate()">Meditate Here</button>
+                    <button onclick="game.exploreRegion()" class="gold">Explore Territory</button>
+                    <button onclick="game.refinePill()" class="danger">Refine Pill</button>
+                    <button onclick="game.triggerTribulation()" class="gold">Tribulation</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Chronicles -->
+        <div class="panel">
+            <div class="panel-title">Chronicles</div>
+            <div id="log-box" class="log-box"></div>
+        </div>
+    </div>
+
+    <!-- Tribulation Modal -->
+    <div id="tribulation-modal" class="tribulation-overlay">
+        <h2 style="color: var(--accent-crimson); margin-bottom: 8px;">HEAVENLY TRIBULATION</h2>
+        <p style="font-size: 0.75rem; color: #aaa; margin-bottom: 10px;">The world's natural law rejects your defiance. Tap to shatter the lightning bolts!</p>
+        <p style="font-size: 0.95rem; color: var(--accent-gold); margin-bottom: 10px;">Bolts Deflected: <span id="trib-counter">0</span> / 12</p>
+        <button onclick="game.resistStrike()" class="gold" style="padding: 14px 28px;">DEFY LIGHTNING</button>
+    </div>
+
+<script>
+    const REALMS = [
+        "Qi Condensation", "Foundation Establishment", "Core Formation", 
+        "Nascent Soul", "Soul Transformation", "Ascendant", "Heaven Defier"
+    ];
+
+    const REGIONS = [
+        { name: "Hao Ling Sect", danger: 1, qiMult: 1, desc: "A peaceful backwater sect. Perfect for laying low." },
+        { name: "Dead Spirit Valley", danger: 3, qiMult: 2.2, desc: "Filled with resentful ghosts and abandoned ancient ruins." },
+        { name: "Ancient Demon Abyss", danger: 6, qiMult: 4.5, desc: "A chaotic rift zone where rogue cultivators hunt for divine items." }
+    ];
+
+    const game = {
+        qi: 0,
+        maxQi: 100,
+        realmIdx: 0,
+        lifespan: 100,
+        maxLifespan: 100,
+        fortitude: 15,
+        stones: 10,
+        meridians: "Intact",
+        currentRegion: 0,
+        inTribulation: false,
+        tribStrikes: 0,
+
+        init() {
+            this.load();
+            this.log("You step out into the vast, open cultivation world. Choose your territory wisely.", "purple");
+            setInterval(() => this.tick(), 1000);
+        },
+
+        log(text, type = "normal") {
+            const box = document.getElementById("log-box");
+            const entry = document.createElement("div");
+            entry.className = `log-entry log-${type}`;
+            entry.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
+            box.prepend(entry);
+        },
+
+        updateUI() {
+            document.getElementById("ui-realm").innerText = REALMS[this.realmIdx];
+            document.getElementById("ui-life").innerText = Math.floor(this.lifespan);
+            document.getElementById("ui-fortitude").innerText = this.fortitude;
+            document.getElementById("ui-stones").innerText = this.stones;
+            document.getElementById("ui-location").innerText = REGIONS[this.currentRegion].name;
+            document.getElementById("ui-meridian").innerText = this.meridians;
+            document.getElementById("ui-qi").innerText = Math.floor(this.qi);
+            document.getElementById("ui-max-qi").innerText = this.maxQi;
+            
+            let pct = Math.min(100, (this.qi / this.maxQi) * 100);
+            document.getElementById("qi-progress").style.width = pct + "%";
+            this.save();
+        },
+
+        changeRegion(idx) {
+            this.currentRegion = parseInt(idx);
+            this.log(`Traveled to open-world territory: ${REGIONS[this.currentRegion].name}. ${REGIONS[this.currentRegion].desc}`, "cyan");
+            this.updateUI();
+        },
+
+        meditate() {
+            let reg = REGIONS[this.currentRegion];
+            let gain = (4 + (this.realmIdx * 4)) * reg.qiMult * (this.meridians === "Damaged" ? 0.4 : 1);
+            this.qi += gain;
+            
+            if (this.qi >= this.maxQi) {
+                if (this.realmIdx < REALMS.length - 1) {
+                    this.realmIdx++;
+                    this.maxQi = Math.floor(this.maxQi * 2.8);
+                    this.maxLifespan += 200;
+                    this.lifespan = this.maxLifespan;
+                    this.log(`Bottleneck shattered! You breakthrough to ${REALMS[this.realmIdx]}.`, "gold");
+                } else {
+                    this.qi = this.maxQi;
+                }
+            }
+            this.updateUI();
+        },
+
+        exploreRegion() {
+            let reg = REGIONS[this.currentRegion];
+            let roll = Math.random();
+            
+            if (roll < 0.4) {
+                let foundStones = reg.danger * 15;
+                this.stones += foundStones;
+                this.log(`Explored ${reg.name}: Found ${foundStones} spirit stones in an old cave!`, "gold");
+            } else if (roll < 0.7) {
+                this.fortitude += reg.danger * 3;
+                this.log(`Explored ${reg.name}: Witnessed a rare natural phenomenon, strengthening your mental fortitude.`, "purple");
+            } else {
+                let damage = reg.danger * 6;
+                this.lifespan -= damage;
+                this.log(`Explored ${reg.name}: Ambushed by regional beasts! Lost ${damage} years of lifespan.`, "crimson");
+            }
+            this.updateUI();
+        },
+
+        refinePill() {
+            if (this.qi < 25) {
+                this.log("Not enough Qi to power the cauldron flames.", "crimson");
+                return;
+            }
+            this.qi -= 25;
+            let roll = Math.random();
+            if (roll < 0.45) {
+                this.fortitude += 5;
+                this.log("Alchemy successful: Refined a high-tier mental pill.", "gold");
+            } else if (roll < 0.75) {
+                this.qi += 45;
+                this.log("Alchemy successful: Liquid medicine floods your dantian with Qi.", "cyan");
+            } else {
+                this.meridians = "Damaged";
+                this.log("Alchemy backfire! Toxic fire burns your meridians.", "crimson");
+            }
+            this.updateUI();
+        },
+
+        triggerTribulation() {
+            if (this.qi < this.maxQi * 0.6) {
+                this.log("Your foundation is too weak for a heavenly trial right now.", "crimson");
+                return;
+            }
+            this.inTribulation = true;
+            this.tribStrikes = 0;
+            document.getElementById("trib-counter").innerText = "0";
+            document.getElementById("tribulation-modal").style.display = "flex";
+        },
+
+        resistStrike() {
+            this.tribStrikes++;
+            document.getElementById("trib-counter").innerText = this.tribStrikes;
+            if (this.tribStrikes >= 12) {
+                document.getElementById("tribulation-modal").style.display = "none";
+                this.inTribulation = false;
+                this.fortitude += 25;
+                this.meridians = "Intact";
+                this.log("Tribulation survived! Your defiance shakes the local realm.", "gold");
+                this.updateUI();
+            }
+        },
+
+        tick() {
+            this.lifespan -= 0.12;
+            if (this.lifespan <= 0) {
+                this.log("Your lifespan has run out in the open world. Reincarnating back at the base sect...", "crimson");
+                this.lifespan = 100;
+                this.qi = 0;
+                this.realmIdx = 0;
+                this.currentRegion = 0;
+                document.getElementById("region-select").value = "0";
+            }
+            this.updateUI();
+        },
+
+        save() {
+            const data = {
+                qi: this.qi, maxQi: this.maxQi, realmIdx: this.realmIdx,
+                lifespan: this.lifespan, maxLifespan: this.maxLifespan,
+                fortitude: this.fortitude, stones: this.stones,
+                meridians: this.meridians, currentRegion: this.currentRegion
+            };
+            localStorage.setItem("renegade_openworld_save", JSON.stringify(data));
+        },
+
+        load() {
+            const saved = localStorage.getItem("renegade_openworld_save");
+            if (saved) {
+                const data = JSON.parse(saved);
+                this.qi = data.qi || 0;
+                this.maxQi = data.maxQi || 100;
+                this.realmIdx = data.realmIdx || 0;
+                this.lifespan = data.lifespan || 100;
+                this.maxLifespan = data.maxLifespan || 100;
+                this.fortitude = data.fortitude || 15;
+                this.stones = data.stones || 10;
+                this.meridians = data.meridians || "Intact";
+                this.currentRegion = data.currentRegion || 0;
+                document.getElementById("region-select").value = this.currentRegion;
+            }
+        }
+    };
+
+    window.onload = () => game.init();
+</script>
+</body>
+</html>
